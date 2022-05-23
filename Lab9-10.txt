@@ -1,0 +1,166 @@
+/*
+  Lab 9-10 
+  Kyle Brown
+  2020-11-20
+
+  In this program we use the HC-SR04 ultrasonic ranging module to calculate the distance from an object placed in front of it. The models range is 2-50cm.
+  The progam uses four separate functions to generate the pulse and get the echo, calculate the distance, generate the correct bar-graph and display the correct data
+  onto the LCD. The program also doesn't use global variables
+
+  Helpful links:
+  http://www.arduino.cc/en/Tutorial/Ping (The example here only uses one pin and uses the SEN136B5B instead of the HC-SR04
+  https://www.arduino.cc/en/Tutorial/LibraryExamples/HelloWorld
+  https://www.youtube.com/watch?v=ZejQOX69K5M 
+*/
+
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+//function prototypes
+void displayDataOnTheLCD();
+String generateBarGraph(long cm);
+long pulseAndEcho(int triggerPin, int echoPin);
+long calculateTheDistance(long microseconds);
+
+void setup() {
+  Serial.begin(9600);
+  lcd.setCursor(0,1);
+  lcd.begin(16,2);
+}
+
+
+void loop() {
+  //In loop we declare local variables needed by the functions and call the functions we declared below
+  long cm, duration, microseconds;
+  String barGraph;
+  pulseAndEcho(6,7);
+  calculateTheDistance(microseconds);
+  cm = calculateTheDistance(duration);
+  generateBarGraph(cm, barGraph); 
+  displayDataOnTheLCD(cm, barGraph);
+}
+
+//All our functions
+
+
+long calculateTheDistance(long microseconds) { 
+  return microseconds /29/ 2;
+  }
+
+long pulseAndEcho(int triggerPin, int echoPin) {
+  triggerPin = 6;
+  echoPin = 7;
+  pinMode(echoPin, INPUT);
+  pinMode(triggerPin, OUTPUT);
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  long duration = pulseIn(echoPin, HIGH);
+  return duration;
+  }
+  
+String generateBarGraph(long cm, String barGraph) {
+  long duration = pulseAndEcho(6,7);
+  cm = calculateTheDistance(duration);
+  if(cm <=2) {
+    barGraph = "|||||||||||||||||";
+    delay(200);
+    return barGraph;
+    }
+  else if(cm < 3.75) {
+    barGraph = "|||||||||||||||| ";
+    delay(200);
+    return barGraph;
+    }
+  else if(cm < 5.625) {
+    barGraph = "||||||||||||||  ";
+    delay(200);
+    return barGraph;
+    }
+  else if(cm < 7.5) {
+    barGraph = "|||||||||||||   ";
+    delay(200);
+    return barGraph;
+    }
+  else if(cm < 9.375) {
+    barGraph = "||||||||||||    ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 11.25) {
+    barGraph = "|||||||||||     ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 13.125) {
+    barGraph = "||||||||||      ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 15) {
+    barGraph = "|||||||||       ";
+    delay(2000);
+    return barGraph;
+    }
+   else if(cm < 16.875) {
+    barGraph = "||||||||        ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 18.75) {
+    barGraph = "|||||||         ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 20.625) {
+    barGraph = "||||||          ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 22.5) {
+    barGraph = "|||||           ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 24.375) {
+    barGraph = "||||            ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 26.25) {
+    barGraph = "|||             ";
+    delay(200);
+    return barGraph;
+    }
+   else if(cm < 28.125) {
+    barGraph = "||              ";
+    delay(200);
+    return barGraph;
+    }
+   else {
+    barGraph = "|               ";
+    delay(200);
+    return barGraph;
+    }
+  return barGraph;
+  }
+  
+void displayDataOnTheLCD(int cm, String barGraph) {
+  long duration = pulseAndEcho(6,7);
+  cm = calculateTheDistance(duration);
+  barGraph = generateBarGraph(cm, barGraph);
+  lcd.print(cm);
+  lcd.print(" cm");
+  lcd.setCursor(0,1);
+  lcd.print(barGraph);
+  delay(200);
+  lcd.clear();
+ }
+

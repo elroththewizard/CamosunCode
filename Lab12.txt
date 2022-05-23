@@ -1,0 +1,194 @@
+/*
+ Lab 12
+ 2020-12-11
+ 
+ This lab does different things with the Three-color RGB module based on the user input. If a number between 0 to 9 is entered, 
+ the resepctive resistor colo-code is displayed. If 'f' or 'F' are entered the LED fades from a color the user eneters to a second color the user enters. Is 'R' or 'r' are entered 
+ one of the resistor color codes are displayed at random. Finally, if the user enters 'S' or 's' a stoplight sequence of green, yellow and red are displayed.
+ Kyle Brown
+ Helpful links: 
+ https://www.geeksforgeeks.org/pointers-in-c-and-c-set-1-introduction-arithmetic-and-array/
+ https://forum.arduino.cc/index.php?topic=397913.0
+ https://www.baldengineer.com/arduino-how-do-you-reset-millis.html 
+ Thanks to Mr Dundas and Sam for taking a look at my code again and helping me get this running
+ */
+typedef struct 
+{
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
+}rgb;
+
+//prototypes
+char getInput();
+void displayLed(rgb *color);
+void fadeLed(rgb fadeFrom, rgb fadeTo, int fadeTime);
+void randomLed(int duration);
+
+void setup() {
+  pinMode(11, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(9, OUTPUT);
+  Serial.begin(9600);
+  randomSeed(analogRead(0)); //Generates a random seed https://www.arduino.cc/reference/en/language/functions/random-numbers/randomseed/
+}
+
+void loop() {
+  char userFadeFrom;
+  char userFadeTo;
+  
+  //Color definitions
+  static rgb red = {0, 0, 255};
+  static rgb orange = {16, 4, 255};
+  static rgb yellow = {125, 0, 255};
+  static rgb green = {255, 0, 0};
+  static rgb blue = {0, 255, 0};
+  static rgb violet = {0, 255, 255};
+  static rgb brown = {25, 5, 200};
+  static rgb black = {0, 0, 0};
+  static rgb grey = {90, 87, 40};
+  static rgb white = {255, 255, 255};
+
+  //Creating an arry from the strucutre called colorCode
+  static rgb colorCode[] = {red, orange, yellow, green, blue, violet, brown, black, grey, white};
+  
+  Serial.printf("Enter a character for it's corresponding resistor color: ");
+  char userInput = getInput();
+  //switch statement for what the user enters
+  switch(userInput)
+  { 
+    /*
+     If the user enters a char from 0 to 9 it's repsective color is displayed on the led
+     */
+
+    case 'r':
+    case 'R':
+      Serial.printf("Randomly displays colors for 2-5 seconds (random time) then off");
+      randomLed(random(2,5));
+      break;
+    case 's':
+    case 'S':
+      Serial.printf("Displays a stopligt sequence green - yellow - red then off");  
+      displayLed(&green);
+      delay(500);
+      displayLed(&yellow);
+      delay(500);
+      displayLed(&red);
+      delay(500);
+      displayLed(&black);
+      break;
+    case '0':
+      displayLed(&black);
+      break;
+    case '1':
+      displayLed(&brown);
+      break;
+    case '2':
+      displayLed(&red);
+      break;
+    case '3':
+      displayLed(&orange);
+      break;
+    case '4':
+      displayLed(&yellow);
+      break;
+    case '5':
+      displayLed(&green);
+      break;
+    case '6':
+      displayLed(&blue);
+      break;
+    case '7':
+      displayLed(&violet);
+      break;
+    case '8':
+      displayLed(&grey);
+      break;
+    case '9':
+      displayLed(&white);
+      break; 
+    case 'f':
+    case 'F':
+      Serial.printf("Enter your fadeFrom color as a char: ");
+      userFadeFrom = getInput();
+      Serial.printf("Enter your fadeTo color as a char: ");
+      userFadeTo = getInput();
+      fadeLed(colorCode[userFadeFrom-'0'], colorCode[userFadeTo-'0'], random(2,5)); //Calls the fadeLed function, subtracts zero from the elemnt number because arrays start at zero and uses a the random function to generate a random integer between 2 and 5
+      break;
+  }
+}
+
+char getInput() {
+  while(Serial.available() == 0);
+  char input = Serial.read();
+  Serial.printf("%c\n", input); 
+  return input;
+}
+
+void displayLed(rgb *color) {
+  analogWrite(9, color->r); //the arrow operator -> access the member passed by reference (using pointers)
+  analogWrite(10, color->g);
+  analogWrite(11, color->b);
+}
+void fadeLed(rgb fadeFrom, rgb fadeTo, int fadeTime) {
+  rgb temp = {fadeFrom.r, fadeFrom.g, fadeFrom.b};
+  int fadeTimeInMs = 1000 * fadeTime;
+  
+  int rCount = abs(fadeFrom.r - fadeTo.r); 
+  int gCount = abs(fadeFrom.g - fadeTo.g);
+  int bCount = abs(fadeFrom.b - fadeTo.b);
+  
+  int count; //We get the largset count and make it the value of count
+  if (bCount < rCount) {
+    if (rCount < gCount) {
+      count = gCount;
+    } else {
+        count = rCount;
+    }
+  }
+  else if (bCount < gCount) {
+    count = gCount;
+  } 
+  else {
+      count = gCount;
+  }
+  displayLed(&temp);
+  for (int c = 0; c < 255; c++) { //try 255
+      if (temp.r != fadeTo.r) {
+        if (temp.r > fadeTo.r) {
+          temp.r--;
+        } else {
+          temp.r++;
+        }
+      }
+      if (temp.g != fadeTo.g) {
+        if (temp.g > fadeTo.g) {
+          temp.g--;
+        } else {
+          temp.g++;
+        }
+      }
+      if (temp.b != fadeTo.b) {
+        if (temp.b > fadeTo.b) {
+          temp.b--;
+        } else {
+          temp.b++;
+        }
+      }
+    delay(fadeTimeInMs/count);
+    displayLed(&temp);
+  }
+}
+
+void randomLed(int duration) {
+  unsigned long currentMillis = millis();
+  while (((duration * 1000) + currentMillis) > millis()) {
+    rgb temp = {random(0,255), random(0,255), random(0,255)};
+    displayLed(&temp);
+    delay(50);
+  }
+  digitalWrite(9, 0);
+  digitalWrite(10, 0);
+  digitalWrite(11, 0);
+  //display black to clear the LED
+}
